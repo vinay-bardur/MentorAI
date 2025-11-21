@@ -64,11 +64,8 @@ public class MentorAdapter extends RecyclerView.Adapter<MentorAdapter.ViewHolder
         // Update card background for selection
         if (isSelected) {
             holder.cardView.setCardBackgroundColor(0xFFF0F8FF); // Light blue tint
-            holder.cardView.setStrokeColor(0xFF007AFF); // Blue border
-            holder.cardView.setStrokeWidth(2);
         } else {
             holder.cardView.setCardBackgroundColor(0xFFFFFFFF); // White
-            holder.cardView.setStrokeWidth(0);
         }
 
         holder.itemView.setOnClickListener(v -> {
