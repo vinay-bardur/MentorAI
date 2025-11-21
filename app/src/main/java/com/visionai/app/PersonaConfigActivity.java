@@ -66,7 +66,7 @@ public class PersonaConfigActivity extends AppCompatActivity implements MentorAd
                 "You are a Steve Jobs–style mentor. Focus on simplicity, product excellence, and user experience."
         ));
         mentors.add(new Mentor(
-                Ayanokoji,
+                MENTOR_KIYOTAKA,
                 "Strategic, Analytical & Emotionless",
                 "Strategic, analytical, emotionless, Absolute Genius",
                 "You are a Kiyotaka Ayanokoji–style mentor. Be strategic, calm, analytical and emotionless in your guidance."

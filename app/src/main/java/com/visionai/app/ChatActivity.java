@@ -96,7 +96,11 @@ public class ChatActivity extends AppCompatActivity {
 
         String apiKey = BuildConfig.GROQ_API_KEY;
         if (TextUtils.isEmpty(apiKey) || apiKey.equals("your_groq_api_key_here")) {
-            Toast.makeText(this, "Please set your Groq API key in gradle.properties", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "⚠️ Please set your Groq API key in gradle.properties", Toast.LENGTH_LONG).show();
+            apiKey = ""; // Set empty to prevent crashes
+        }
+        if (apiKey.length() > 0 && !apiKey.startsWith("gsk_")) {
+            Toast.makeText(this, "⚠️ Invalid API key format. Should start with 'gsk_'", Toast.LENGTH_LONG).show();
         }
         groqClient = new GroqClient(apiKey);
 
@@ -232,19 +236,30 @@ public class ChatActivity extends AppCompatActivity {
 
     private String buildSystemPrompt() {
         if (MODE_PANEL.equals(chatMode)) {
-            return "You are a single AI simulating a PANEL of five mentors: " +
-                   MENTOR_ELON + ", " + MENTOR_TIM + ", " + MENTOR_ILIA + ", " + 
-                   MENTOR_STEVE + ", and " + MENTOR_KIYOTAKA + ". " +
-                   "The user is " + userName + ". " +
-                   "For every user message respond with 5 labeled sections exactly in this order: " +
-                   "[" + MENTOR_ELON + "], [" + MENTOR_TIM + "], [" + MENTOR_ILIA + "], " +
-                   "[" + MENTOR_STEVE + "], [" + MENTOR_KIYOTAKA + "]. " +
-                   "Use bullet points and short actionable tasks per mentor. " +
-                   "Do not include extra meta commentary.";
+            return "You are a single AI simulating a PANEL of five mentors: "
+                + "Elon Musk, Tim Ferriss, Ilia Topuria, Steve Jobs, Kiyotaka Ayanokoji. "
+                + "The user's name is " + userName + ".\n\n"
+                + "RULES:\n"
+                + "1) For every user message, respond with five labeled sections in this exact order:\n"
+                + "   [Elon Musk]\n"
+                + "   - (2-4 bullet points, absolute first-principles actions and moonshot mindset)\n"
+                + "   [Tim Ferriss]\n"
+                + "   - (2-4 bullet points, 80/20 experiments and quick wins)\n"
+                + "   [Ilia Topuria]\n"
+                + "   - (2-4 bullet points, champion mentality, discipline steps)\n"
+                + "   [Steve Jobs]\n"
+                + "   - (2-4 bullet points, product/focus/simplify approach)\n"
+                + "   [Kiyotaka Ayanokoji]\n"
+                + "   - (2-4 bullet points, analytic, strategic minimal-action plan)\n\n"
+                + "2) Use short, actionable bullets. When appropriate, address " + userName + " directly by name. "
+                + "3) No extra prefaces, no meta commentary, no internal thoughts. Just the five sections.";
         } else {
-            return "You are simulating the single mentor " + selectedSingleMentor + ". " +
-                   "The user is " + userName + ". " +
-                   "Speak only as this mentor. Provide direct, actionable guidance in their style.";
+            return "You are simulating the mentor: " + selectedSingleMentor + ". "
+                + "The user's name is " + userName + ".\n\n"
+                + "RULES:\n"
+                + "1) Answer only as this mentor. Use tone and approach faithful to that mentor's public persona. "
+                + "2) Provide 4-6 short, actionable steps or suggestions for the user's situation. Address the user by name when appropriate. "
+                + "3) No meta commentary, no multiple mentors. Keep it concise and practical.";
         }
     }
     
@@ -274,6 +289,12 @@ public class ChatActivity extends AppCompatActivity {
                 if (response.isSuccessful() && response.body() != null) {
                     String reply = GroqClient.extractMessageContent(response.body());
                     addAiMessage(reply);
+                } else if (response.code() == 401) {
+                    addAiMessage("❌ Authentication Error (401): Invalid API key.\n\n" +
+                        "Please check:\n" +
+                        "1. Your API key in gradle.properties\n" +
+                        "2. Key should start with 'gsk_'\n" +
+                        "3. Get a valid key from https://console.groq.com/");
                 } else {
                     addAiMessage("Error: " + response.code() + " - " + response.message());
                 }
