@@ -1,0 +1,1 @@
+# VisionAI proguard rules

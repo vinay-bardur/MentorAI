@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <style name="Theme.VisionAI" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/ios_primary</item>
+        <item name="colorPrimaryVariant">@color/ios_primary</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <item name="colorSecondary">@color/ios_primary</item>
+        <item name="android:statusBarColor" tools:targetApi="l">@color/ios_primary</item>
+    </style>
+</resources>
