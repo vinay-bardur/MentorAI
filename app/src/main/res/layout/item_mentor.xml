@@ -37,7 +37,7 @@
                 android:id="@+id/mentorRole"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="First Principles & Moonshots"
+                android:text="First Principles &amp; Moonshots"
                 android:textSize="14sp"
                 android:textColor="#555555"
                 android:paddingTop="4dp" />
