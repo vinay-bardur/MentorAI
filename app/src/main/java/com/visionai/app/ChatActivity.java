@@ -59,8 +59,16 @@ public class ChatActivity extends AppCompatActivity {
     private String chatMode = MODE_PANEL;
     private String selectedSingleMentor = MENTOR_ELON;
     private String userName = "User";
+    private String confirmedGoal = null;
+    private boolean diagnosticAsked = false;
 
     private final List<Message> cachedMessages = new ArrayList<>();
+    
+    // Diagnostic trigger keywords
+    private static final String[] DIAGNOSTIC_TRIGGERS = {
+        "bored", "no purpose", "don't want", "lazy", "lost", 
+        "procrastin", "demotivat", "pointless", "waste time"
+    };
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -222,6 +230,34 @@ public class ChatActivity extends AppCompatActivity {
         scrollToBottom();
 
         saveMessage(userMsg);
+        
+        // Check if diagnostic needed
+        if (needsDiagnostic(text)) {
+            diagnosticAsked = true;
+            addAiMessage(getDiagnosticMessage());
+            return;
+        }
+        
+        // Check if user replied "no goal" after diagnostic
+        if (diagnosticAsked && confirmedGoal == null && text.toLowerCase().contains("no goal")) {
+            addAiMessage(getGoalOfferMessage());
+            return;
+        }
+        
+        // Check if user is choosing a goal
+        if (diagnosticAsked && confirmedGoal == null) {
+            String lower = text.toLowerCase();
+            if (lower.contains("money") || lower.contains("$")) {
+                confirmedGoal = "Earn $1,000 in 30 days";
+                addAiMessage("🎯 Goal set: " + confirmedGoal + "\n\nGreat! Now let's get you there. What's your first question?");
+                return;
+            } else if (lower.contains("lifestyle") || lower.contains("world")) {
+                confirmedGoal = "Achieve world-class lifestyle through discipline and skills";
+                addAiMessage("🎯 Goal set: " + confirmedGoal + "\n\nExcellent! Now let's build your path. What's your first question?");
+                return;
+            }
+        }
+        
         callGroq(text);
     }
 
@@ -234,49 +270,59 @@ public class ChatActivity extends AppCompatActivity {
         sendButton.setEnabled(!loading);
     }
 
+    private boolean needsDiagnostic(String userMessage) {
+        if (confirmedGoal != null) return false;
+        if (diagnosticAsked) return false;
+        
+        String lower = userMessage.toLowerCase();
+        for (String trigger : DIAGNOSTIC_TRIGGERS) {
+            if (lower.contains(trigger)) return true;
+        }
+        return false;
+    }
+    
+    private String getDiagnosticMessage() {
+        return "Let me understand your situation better:\n\n"
+            + "1) What is one specific task you should be doing right now (or intended to do)? If none, reply \"none\".\n\n"
+            + "2) What's the primary blocker stopping you from doing it? (e.g., tired, unclear steps, no tools, fear).\n\n"
+            + "3) Do you have a goal you care about? If not, reply \"no goal\" and I will propose a practical starter goal (example: earn $1,000 in 30 days).";
+    }
+    
+    private String getGoalOfferMessage() {
+        return "I can help you set a goal. Choose one:\n\n"
+            + "💰 **Money Goal** - Earn $1,000 in 30 days (practical income plan)\n\n"
+            + "🎯 **Lifestyle Goal** - Achieve world-class lifestyle (discipline + skills plan)\n\n"
+            + "Reply with 'money' or 'lifestyle' to get started.";
+    }
+    
     private String buildSystemPrompt() {
+        String goalContext = confirmedGoal != null ? "\nCONFIRMED GOAL: " + confirmedGoal + "\n" : "";
+        
         if (MODE_PANEL.equals(chatMode)) {
-            return "SYSTEM INSTRUCTIONS FOR PANEL (strict):\n"
-                + "You are a single AI that simulates a PANEL of five mentors in the exact order: "
-                + "Elon Musk, Tim Ferriss, Ilia Topuria, Steve Jobs, Kiyotaka Ayanokoji.\n"
-                + "The user's name is " + userName + ".\n\n"
-                + "SESSION MEMORY: You must read and use the recent conversation history provided. "
-                + "Reference prior user statements where relevant (e.g., 'Previously you said...'). Evolve advice based on that memory.\n\n"
-                + "DOMAIN LOCK: You only answer topics about CAREER, SKILLS, PRODUCTIVITY, HABITS, MINDSET, and LIFE-CAREER STRATEGY. "
-                + "If a user asks about sexual content, dating advice outside career, illegal activity, or medical/therapy diagnosis, reply ONLY with: "
-                + "'I can't assist with that. VisionAI focuses on career, skills, habits and discipline. If you need help in those areas, tell me more about your work or goals.'\n\n"
-                + "OUTPUT FORMAT (REQUIRED): For every user message return FIVE labeled sections in this exact order: "
-                + "[Elon Musk], [Tim Ferriss], [Ilia Topuria], [Steve Jobs], [Kiyotaka Ayanokoji]. "
-                + "For each section provide EXACTLY: three (3) short action bullets (each ≤14 words) followed by one single-line 'Immediate action (30m): ...'. "
-                + "Do NOT add any other text or headings.\n\n"
-                + "ANTI-REPEAT RULE: Before emitting actions, check the last 3 assistant outputs in session memory; "
-                + "if any proposed action repeats >60% in meaning or wording, replace it with a novel alternative and label it 'Alternative action'. \n\n"
-                + "PROGRESSIVE COACHING: At least one bullet per mentor must reference a prior user fact or previous mentor instruction (if applicable), "
-                + "and propose a clear next step that builds on it.\n\n"
-                + "PERSONA GUIDE: Use each mentor's voice and tactical lens:\n"
-                + "- Elon Musk: first principles, build/prototype quickly, technical moonshots\n"
-                + "- Tim Ferriss: 80/20 rule, experiments, micro-tests, automate\n"
-                + "- Ilia Topuria: routine/discipline/training, incremental overload, momentum\n"
-                + "- Steve Jobs: simplify ruthlessly, focus on product essence, remove features\n"
-                + "- Kiyotaka Ayanokoji: strategic minimalism, leverage, calm analysis\n\n"
-                + "BE CONCISE: Bullets only, no long paragraphs, no intros, no meta commentary, no apologies. "
-                + "Use the user's name when appropriate.\n\n"
-                + "TEMPERATURE: keep responses practical; prefer concrete short steps, not philosophical essays.\n"
-                + "END OF INSTRUCTIONS.";
+            return "SYSTEM: PANEL MENTORING (strict rules).\n"
+                + "You simulate a PANEL of five mentors in this exact order: Elon Musk, Tim Ferriss, Ilia Topuria, Steve Jobs, Kiyotaka Ayanokoji.\n"
+                + "User's name: " + userName + "." + goalContext + "\n"
+                + "MEMORY RULE: Session memory (diagnostic answers and confirmed goal) is provided. Use it to reference prior facts and evolve advice.\n\n"
+                + "DIAGNOSTIC RULE: If session memory does NOT contain a confirmed GOAL, DO NOT produce mentor coaching. "
+                + "Instead, return ONLY diagnostic questions and STOP.\n\n"
+                + "GOAL RULE: Only after user confirms a goal (stored in session memory) you may produce coaching.\n\n"
+                + "OUTPUT FORMAT: Produce exactly five labeled sections in this order: [Elon Musk], [Tim Ferriss], [Ilia Topuria], [Steve Jobs], [Kiyotaka Ayanokoji]. "
+                + "For each section give exactly 3 short actionable bullets (≤14 words each) and 'Immediate action (30m):' with one concrete 30-minute step. "
+                + "No extra paragraphs, intros, or meta commentary.\n\n"
+                + "ANTI-REPEAT: Check last 3 assistant replies in memory. If any proposed action repeats >60%, replace with 'Alternative action' that is meaningfully different.\n\n"
+                + "DOMAIN: Only discuss CAREER, SKILLS, PRODUCTIVITY, HABITS, and LIFE-CAREER STRATEGY. "
+                + "For sexual, dating, illegal, or medical/therapy content, reply ONLY with: 'I can't assist with that. VisionAI focuses on career, skills, habits and discipline.'\n\n"
+                + "PERSONA GUIDELINES: Elon=build/prototype, Tim=80/20 experiments, Ilia=routine/discipline, Jobs=simplify/user-value, Ayanokoji=strategic minimalism.\n"
+                + "END.";
         } else {
-            return "SYSTEM INSTRUCTIONS FOR SINGLE MENTOR (strict):\n"
-                + "You are simulating exactly one mentor: " + selectedSingleMentor + ". "
-                + "The user's name is " + userName + ".\n\n"
-                + "SESSION MEMORY: Use session memory to reference past user messages. "
-                + "If the user asks follow-ups, explicitly reference the last relevant user message and propose the next progressive action.\n\n"
-                + "DOMAIN LOCK: You only answer topics about CAREER, SKILLS, PRODUCTIVITY, HABITS, MINDSET, and LIFE-CAREER STRATEGY. "
-                + "If a user asks about sexual content, dating advice outside career, illegal activity, or medical/therapy diagnosis, reply ONLY with: "
-                + "'I can't assist with that. VisionAI focuses on career, skills, habits and discipline. If you need help in those areas, tell me more about your work or goals.'\n\n"
-                + "OUTPUT FORMAT: Provide 4-6 short actionable steps (each ≤14 words) and one 'Immediate action (30m): ...' line. \n\n"
-                + "ANTI-REPEAT RULE: Do not repeat suggestions that appear in the last 3 assistant replies; provide novel, prioritized steps.\n\n"
-                + "PERSONA: Use a voice faithful to the chosen mentor: specific tactics, prioritized sequence, and clear immediate action. \n\n"
-                + "BE CONCISE: No meta commentary, no filler, no apologies. Keep it clean, crisp, concise and actionable.\n"
-                + "END OF INSTRUCTIONS.";
+            return "SYSTEM: SINGLE MENTOR (strict rules).\n"
+                + "Simulate exactly one named mentor: " + selectedSingleMentor + ". "
+                + "User's name: " + userName + "." + goalContext + "\n"
+                + "Use session memory and confirmed goal. If no goal confirmed, return diagnostic questions and stop.\n\n"
+                + "OUTPUT: Provide 4-6 short action bullets (≤14 words) and 'Immediate action (30m):' one concrete step. "
+                + "Avoid repetition of last 3 assistant replies. Use persona voice.\n\n"
+                + "DOMAIN and REFUSAL same as PANEL.\n"
+                + "END.";
         }
     }
     
