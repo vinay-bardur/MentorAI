@@ -44,7 +44,7 @@ public class MainActivity extends AppCompatActivity implements ConversationAdapt
         loadConversations();
 
         fabNewChat.setOnClickListener(v -> {
-            Intent intent = new Intent(MainActivity.this, PersonaConfigActivity.class);
+            Intent intent = new Intent(MainActivity.this, ChatActivity.class);
             startActivity(intent);
         });
         
