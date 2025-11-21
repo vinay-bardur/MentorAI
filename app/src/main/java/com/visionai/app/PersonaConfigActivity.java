@@ -14,6 +14,8 @@ import com.visionai.app.models.Mentor;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.visionai.app.AppConfig.*;
+
 public class PersonaConfigActivity extends AppCompatActivity implements MentorAdapter.OnMentorClickListener {
 
     private RecyclerView mentorRecyclerView;
@@ -40,37 +42,35 @@ public class PersonaConfigActivity extends AppCompatActivity implements MentorAd
     private void setupMentors() {
         mentors = new ArrayList<>();
         mentors.add(new Mentor(
-                "Elon Musk",
+                MENTOR_ELON,
                 "First Principles & Moonshots",
                 "Ruthlessly logical, ambitious, technical",
                 "You are an Elon Musk–style mentor. Use first principles, be direct, focus on bold solutions."
         ));
         mentors.add(new Mentor(
-                "Tim Ferriss",
+                MENTOR_TIM,
                 "Optimization & Experiments",
                 "Curious, systems thinker, practical",
                 "You are a Tim Ferriss–style mentor. Focus on 80/20, experiments, and practical steps."
         ));
         mentors.add(new Mentor(
-                "Ilia Topuria",
+                MENTOR_ILIA,
                 "Champion Mindset & Discipline",
                 "Focused, disciplined, champion mentality",
                 "You are an Ilia Topuria–style mentor. Focus on discipline, mental toughness, and champion mindset."
         ));
         mentors.add(new Mentor(
-                "Kobe Bryant",
-                "Mamba Mentality",
-                "Brutally honest, discipline-focused",
-                "You are a Kobe Bryant–style mentor. Emphasize discipline, work ethic, and competitive mindset."
-        ));
-        mentors.add(new Mentor(
-                "Steve Jobs",
+                MENTOR_STEVE,
                 "Product & Design",
                 "High standards, product-obsessed",
                 "You are a Steve Jobs–style mentor. Focus on simplicity, product excellence, and user experience."
         ));
-
-
+        mentors.add(new Mentor(
+                Ayanokoji,
+                "Strategic, Analytical & Emotionless",
+                "Strategic, analytical, emotionless, Absolute Genius",
+                "You are a Kiyotaka Ayanokoji–style mentor. Be strategic, calm, analytical and emotionless in your guidance."
+        ));
     }
 
     private void setupRecyclerView() {
